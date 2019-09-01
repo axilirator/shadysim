@@ -371,9 +371,10 @@ class AppLoaderCommands(object):
 
 parser = argparse.ArgumentParser(description='Tool for Toorcamp SIMs.')
 parser.add_argument('-I', '--interface', default='pcsc',
-		    choices = ['pcsc', 'serial', 'dummy'])
+		    choices = ['pcsc', 'serial', 'calypso', 'dummy'])
 parser.add_argument('-s', '--serialport', default='/dev/ttyUSB0')
 parser.add_argument('-p', '--pcsc', nargs='?', const=0, type=int, default=0)
+parser.add_argument('-c', '--calypso', default='/tmp/osmocom_l2')
 parser.add_argument('-d', '--delete-app')
 parser.add_argument('-l', '--load-app')
 parser.add_argument('-i', '--install')
@@ -413,6 +414,11 @@ elif args.interface == "serial":
 		raise argparse.ArgumentTypeError("You need to specify serial port using -s")
 	from pySim.transport.serial import SerialSimLink
 	sl = SerialSimLink(device=args.serialport, baudrate=9600)
+elif args.interface == "calypso":
+	if args.calypso is None:
+		raise argparse.ArgumentTypeError("You need to specify L1CTL socket path using -c")
+	from pySim.transport.calypso import CalypsoSimLink
+	sl = CalypsoSimLink(sock_path=args.calypso)
 elif args.interface == "dummy":
 	class DummySL:
 		pass
