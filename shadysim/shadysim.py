@@ -370,8 +370,10 @@ class AppLoaderCommands(object):
 #------
 
 parser = argparse.ArgumentParser(description='Tool for Toorcamp SIMs.')
-parser.add_argument('-s', '--serialport')
-parser.add_argument('-p', '--pcsc', nargs='?', const=0, type=int)
+parser.add_argument('-I', '--interface', default='pcsc',
+		    choices = ['pcsc', 'serial', 'dummy'])
+parser.add_argument('-s', '--serialport', default='/dev/ttyUSB0')
+parser.add_argument('-p', '--pcsc', nargs='?', const=0, type=int, default=0)
 parser.add_argument('-d', '--delete-app')
 parser.add_argument('-l', '--load-app')
 parser.add_argument('-i', '--install')
@@ -401,18 +403,22 @@ parser.add_argument('--smpp', action='store_true')
 
 args = parser.parse_args()
 
-if args.pcsc is not None:
+if args.interface == "pcsc":
+	if args.pcsc is None:
+		raise argparse.ArgumentTypeError("You need to specify PC/SC reader using -p")
 	from pySim.transport.pcsc import PcscSimLink
 	sl = PcscSimLink(args.pcsc)
-elif args.serialport is not None:
+elif args.interface == "serial":
+	if args.serialport is None:
+		raise argparse.ArgumentTypeError("You need to specify serial port using -s")
 	from pySim.transport.serial import SerialSimLink
 	sl = SerialSimLink(device=args.serialport, baudrate=9600)
-elif args.smpp is not None:
+elif args.interface == "dummy":
 	class DummySL:
 		pass
 	sl = DummySL()
 	pass
-else:
+else: # Shall not happen in general, parser.parse_args() would fail
 	raise RuntimeError("Need to specify either --serialport, --pcsc or --smpp")
 
 sc = SimCardCommands(sl)
